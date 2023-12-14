@@ -29,7 +29,9 @@ module by Jaro Hofierka
  *   Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,6 +108,7 @@ void calculate(double xcoord, double ycoord, int buffer_e, int buffer_w,
 
 int ip, jp, ip100, jp100;
 int n, m, m100, n100;
+int nprocs;
 int degreeOutput, compassOutput = FALSE;
 float **z, **z100, **horizon_raster;
 double stepx, stepy, stepxhalf, stepyhalf, stepxy, xp, yp, op, dp, xg0, xx0,
@@ -163,7 +166,7 @@ int main(int argc, char *argv[])
     struct {
         struct Option *elevin, *dist, *coord, *direction, *horizon, *step,
             *start, *end, *bufferzone, *e_buff, *w_buff, *n_buff, *s_buff,
-            *maxdistance, *output;
+            *maxdistance, *output, *threads;
     } parm;
 
     struct {
@@ -299,6 +302,8 @@ int main(int argc, char *argv[])
     parm.output->description =
         _("Name of file for output (use output=- for stdout)");
     parm.output->guisection = _("Point mode");
+    
+    parm.threads = G_define_standard_option(G_OPT_M_NPROCS);
 
     flag.degreeOutput = G_define_flag();
     flag.degreeOutput->key = 'd';
@@ -313,8 +318,18 @@ int main(int argc, char *argv[])
     if (G_parser(argc, argv))
         exit(EXIT_FAILURE);
 
+    sscanf(parm.threads->answer, "%d", &nprocs);
+    if (nprocs < 1)
+        G_fatal_error(_("<%d> is not valid number of nprocs."), nprocs);
     G_get_set_window(&cellhd);
-
+#if defined(_OPENMP)
+    omp_set_num_threads(nprocs);
+#else
+    if (nprocs != 1)
+        G_warning(_("GRASS is compiled without OpenMP support. Ignoring "
+                    "threads setting."));
+    nprocs = 1;
+#endif
     stepx = cellhd.ew_res;
     stepy = cellhd.ns_res;
     stepxhalf = stepx / 2.;
