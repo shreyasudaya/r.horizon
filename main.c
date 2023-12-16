@@ -1105,7 +1105,7 @@ void calculate(double xcoord, double ycoord, int buffer_e, int buffer_w,
         /*  The loop over raster points starts here!                    */
 
         /****************************************************************/
-
+    
         if (horizon != NULL) {
             horizon_raster =
                 (float **)G_malloc(sizeof(float *) * (hor_numrows));
@@ -1132,7 +1132,7 @@ void calculate(double xcoord, double ycoord, int buffer_e, int buffer_w,
         }
 
         decimals = G_get_num_decimals(str_step);
-
+    #pragma omp parallel private(i) if (nprocs > 1){
         for (k = 0; k < arrayNumInt; k++) {
             struct History history;
 
@@ -1233,7 +1233,7 @@ void calculate(double xcoord, double ycoord, int buffer_e, int buffer_w,
 
                     } /* undefs */
                 }
-            }
+            }}
 
             G_debug(1, "OUTGR() starts...");
             OUTGR(cellhd.rows, cellhd.cols);
