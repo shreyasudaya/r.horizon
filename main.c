@@ -1105,7 +1105,7 @@ void calculate(double xcoord, double ycoord, int buffer_e, int buffer_w,
         /*  The loop over raster points starts here!                    */
 
         /****************************************************************/
-    #pragma omp parallel private(i) if (nprocs > 1){
+    #pragma omp parallel{
         if (horizon != NULL) {
             horizon_raster =
                 (float **)G_malloc(sizeof(float *) * (hor_numrows));
